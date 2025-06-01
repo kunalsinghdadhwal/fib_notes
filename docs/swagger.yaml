@@ -162,35 +162,33 @@ definitions:
 info:
   contact: {}
 paths:
-  /auth/change-password:
-    put:
+  /auth/register:
+    post:
       consumes:
       - application/json
-      description: Change the password of the currently authenticated user
+      description: Create a new user account with name, email, and password
       parameters:
-      - description: Password change data
+      - description: User registration data
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.ChangePasswordRequest'
+          $ref: '#/definitions/handlers.RegisterRequest'
       produces:
       - application/json
       responses:
-        "200":
-          description: Password changed successfully
+        "201":
+          description: User registered successfully
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/handlers.RegisterResponse'
         "400":
           description: Invalid request data
           schema:
             additionalProperties:
               type: string
             type: object
-        "401":
-          description: User not authenticated or current password incorrect
+        "409":
+          description: User already exists
           schema:
             additionalProperties:
               type: string
@@ -201,9 +199,7 @@ paths:
             additionalProperties:
               type: string
             type: object
-      security:
-      - BearerAuth: []
-      summary: Change user password
+      summary: Register a new user
       tags:
       - Authentication
   /auth/login:
@@ -301,6 +297,50 @@ paths:
       summary: Get current user profile
       tags:
       - Authentication
+  /auth/change-password:
+    put:
+      consumes:
+      - application/json
+      description: Change the password of the currently authenticated user
+      parameters:
+      - description: Password change data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password changed successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authenticated or current password incorrect
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change user password
+      tags:
+      - Authentication
   /auth/refresh:
     post:
       consumes:
@@ -334,46 +374,6 @@ paths:
               type: string
             type: object
       summary: Refresh access token
-      tags:
-      - Authentication
-  /auth/register:
-    post:
-      consumes:
-      - application/json
-      description: Create a new user account with name, email, and password
-      parameters:
-      - description: User registration data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.RegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: User registered successfully
-          schema:
-            $ref: '#/definitions/handlers.RegisterResponse'
-        "400":
-          description: Invalid request data
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "409":
-          description: User already exists
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Register a new user
       tags:
       - Authentication
   /notes:
