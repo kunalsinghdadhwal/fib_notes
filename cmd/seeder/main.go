@@ -1,10 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/kunalsinghdadhwal/fib_notes/db"
 	"github.com/kunalsinghdadhwal/fib_notes/seeder"
 )
@@ -15,53 +15,53 @@ const (
 )
 
 func main() {
-
 	if err := db.Connect(); err != nil {
 		fmt.Printf("Error: Failed to connect to database: %v\n", err)
 		os.Exit(1)
 	}
 
-	if len(os.Args) < 2 {
-		printHelp()
-		os.Exit(1)
-	}
-
-	command := os.Args[1]
-
-	switch command {
-	case "seed":
-		handleSeed()
-	case "clear":
-		handleClear()
-	case "help", "-h", "--help":
-		printHelp()
-	case "version", "-v", "--version":
-		printVersion()
-	default:
-		fmt.Printf("Error: Unknown command '%s'\n\n", command)
-		printHelp()
-		os.Exit(1)
-	}
-}
-
-func handleSeed() {
-	fmt.Printf("Starting database seeding...\n\n")
-
-	userCount := 10
-	if len(os.Args) > 2 {
-		if count, err := parseUserCount(os.Args[2]); err == nil {
-			userCount = count
-		} else {
-			fmt.Printf("Warning: Invalid user count '%s', using default: %d\n", os.Args[2], userCount)
+	// Check for specific commands first
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "clear":
+			handleClear()
+			return
+		case "help", "-h", "--help":
+			printHelp()
+			return
+		case "version", "-v", "--version":
+			printVersion()
+			return
+		case "-n":
+			// Handle -n flag directly
+			handleSeed()
+			return
 		}
 	}
 
-	if err := seeder.SeedDatabase(userCount); err != nil {
+	// If no arguments or unrecognized command, default to seed with parsing all args
+	handleSeed()
+}
+
+func handleSeed() {
+	seedCmd := flag.NewFlagSet("seed", flag.ExitOnError)
+	userCount := seedCmd.Int("n", 10, "Number of users to create (default: 10, max: 100)")
+
+	seedCmd.Parse(os.Args[1:])
+
+	if *userCount < 1 || *userCount > 100 {
+		fmt.Printf("Error: User count must be between 1 and 100\n")
+		os.Exit(1)
+	}
+
+	fmt.Printf("Starting database seeding...\n\n")
+
+	if err := seeder.SeedDatabase(*userCount); err != nil {
 		fmt.Printf("Seeding failed: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Database seeded successfully with %d users!\n", userCount)
+	fmt.Printf("Database seeded successfully with %d users!\n", *userCount)
 }
 
 func handleClear() {
@@ -78,18 +78,19 @@ func handleClear() {
 func printHelp() {
 	fmt.Printf("%s v%s\n\n", appName, version)
 	fmt.Printf("USAGE:\n")
-	fmt.Printf("  seeder <command> [options]\n\n")
+	fmt.Printf("  seed [options]      Default command - seed the database\n")
+	fmt.Printf("  seed <command>\n\n")
+	fmt.Printf("OPTIONS:\n")
+	fmt.Printf("  -n <count>          Number of users to create (default: 10, max: 100)\n\n")
 	fmt.Printf("COMMANDS:\n")
-	fmt.Printf("  seed [count]    Seed the database with dummy users and notes\n")
-	fmt.Printf("                  count: Number of users to create (default: 10, max: 100)\n")
-	fmt.Printf("  clear           Clear all users and notes from the database\n")
-	fmt.Printf("  help            Show this help message\n")
-	fmt.Printf("  version         Show version information\n\n")
+	fmt.Printf("  clear               Clear all users and notes from the database\n")
+	fmt.Printf("  help                Show this help message\n")
+	fmt.Printf("  version             Show version information\n\n")
 	fmt.Printf("EXAMPLES:\n")
-	fmt.Printf("  seeder seed           # Create 10 users with 5+ notes each\n")
-	fmt.Printf("  seeder seed 25        # Create 25 users with 5+ notes each\n")
-	fmt.Printf("  seeder clear          # Clear all data\n")
-	fmt.Printf("  seeder help           # Show this help\n\n")
+	fmt.Printf("  seed                # Create 10 users with 5+ notes each\n")
+	fmt.Printf("  seed -n 25          # Create 25 users with 5+ notes each\n")
+	fmt.Printf("  seed clear          # Clear all data\n")
+	fmt.Printf("  seed help           # Show this help\n\n")
 	fmt.Printf("NOTES:\n")
 	fmt.Printf("  - Each user will have 5-10 random notes\n")
 	fmt.Printf("  - User names are authentic Indian names\n")
@@ -100,18 +101,4 @@ func printHelp() {
 func printVersion() {
 	fmt.Printf("%s v%s\n", appName, version)
 	fmt.Printf("Built for FibNotes API\n")
-}
-
-func parseUserCount(countStr string) (int, error) {
-	var count int
-	if _, err := fmt.Sscanf(countStr, "%d", &count); err != nil {
-		return 0, err
-	}
-	if count < 1 {
-		return 0, fmt.Errorf("user count must be at least 1")
-	}
-	if count > 100 {
-		return 0, fmt.Errorf("user count cannot exceed 100")
-	}
-	return count, nil
 }
