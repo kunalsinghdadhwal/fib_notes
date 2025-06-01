@@ -30,34 +30,6 @@ This application follows a clean architecture pattern with clear separation of c
 - **Containerization**: Docker & Docker Compose
 - **Environment**: dotenv for configuration
 
-## API Endpoints
-
-### Authentication
-```
-POST   /auth/register        - User registration
-POST   /auth/login           - User login
-POST   /auth/refresh         - Refresh access token
-POST   /auth/logout          - User logout (protected)
-GET    /auth/me              - Get current user info (protected)
-PUT    /auth/change-password - Change user password (protected)
-```
-
-### Notes
-```
-POST   /notes                - Create a new note (protected)
-GET    /notes                - List user notes with pagination (protected)
-GET    /notes/:id            - Get specific note (protected)
-PUT    /notes/:id            - Update note (protected)
-DELETE /notes/:id            - Delete note (protected)
-```
-
-### System
-```
-GET    /                     - Redirect to API documentation
-GET    /api/reference        - Interactive API documentation
-GET    /health               - Health check endpoint
-```
-
 ## Quick Start
 
 ### Prerequisites
@@ -129,11 +101,35 @@ docker exec -it notes_app ./seed help
 docker exec -it notes_app ./seed -n 20
 ```
 
-The seeder creates:
-- User names and email addresses
-- Professional note content (meeting notes, project plans, etc.)
-- Randomized note distribution (5-10 notes per user)
-- Hashed passwords (default: "password123")
+
+
+## API Endpoints
+
+### Authentication
+```
+POST   /auth/register        - User registration
+POST   /auth/login           - User login
+POST   /auth/refresh         - Refresh access token
+POST   /auth/logout          - User logout (protected)
+GET    /auth/me              - Get current user info (protected)
+PUT    /auth/change-password - Change user password (protected)
+```
+
+### Notes
+```
+POST   /notes                - Create a new note (protected)
+GET    /notes                - List user notes with pagination (protected)
+GET    /notes/:id            - Get specific note (protected)
+PUT    /notes/:id            - Update note (protected)
+DELETE /notes/:id            - Delete note (protected)
+```
+
+### System
+```
+GET    /                     - Redirect to API documentation
+GET    /api/reference        - Interactive API documentation
+GET    /health               - Health check endpoint
+```
 
 ## Configuration
 
