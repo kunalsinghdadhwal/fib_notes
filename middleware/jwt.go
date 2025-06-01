@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"strings"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/kunalsinghdadhwal/fib_notes/utils"
@@ -17,38 +15,27 @@ type UserInfo struct {
 }
 
 func JWTMiddleware() fiber.Handler {
+
 	return func(c *fiber.Ctx) error {
-		authHeader := c.Get("Authorization")
-		if authHeader == "" {
+
+		accessToken := c.Cookies("access_token")
+		if accessToken == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Authorization header required",
+				"error": "Access token is missing",
 			})
 		}
 
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid authorization header format",
-			})
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Token required",
-			})
-		}
-
-		claims, err := utils.ValidateJWT(tokenString)
+		claims, err := utils.ValidateJWT(accessToken)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid or expired token",
+				"error": "Invalid access token",
 			})
 		}
-
 		c.Locals(UserContextKey, claims)
-
 		return c.Next()
+
 	}
+
 }
 
 func GetUserFromContext(c *fiber.Ctx) (*utils.JWTClaims, bool) {

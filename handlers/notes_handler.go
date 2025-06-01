@@ -10,67 +10,55 @@ import (
 	"gorm.io/gorm"
 )
 
-// NotesHandler contains all notes related handlers
 type NotesHandler struct{}
 
-// NewNotesHandler creates a new notes handler instance
 func NewNotesHandler() *NotesHandler {
 	return &NotesHandler{}
 }
 
-// CreateNoteRequest represents the request body for creating a note
 type CreateNoteRequest struct {
-	Title   string `json:"title" validate:"required,min=1,max=255"`
-	Content string `json:"content" validate:"required,min=1"`
+	Title   string `json:"title" validate:"required,min=1,max=255" example:"My First Note"`
+	Content string `json:"content" validate:"required,min=1" example:"This is the content of my first note"`
 }
 
-// UpdateNoteRequest represents the request body for updating a note
 type UpdateNoteRequest struct {
-	Title   string `json:"title" validate:"required,min=1,max=255"`
-	Content string `json:"content" validate:"required,min=1"`
+	Title   string `json:"title" validate:"required,min=1,max=255" example:"Updated Note Title"`
+	Content string `json:"content" validate:"required,min=1" example:"This is the updated content of my note"`
 }
 
-// NoteResponse represents the response for note operations
 type NoteResponse struct {
-	ID        uint   `json:"id"`
-	Title     string `json:"title"`
-	Content   string `json:"content"`
-	CreatedAt uint   `json:"created_at"`
-	UpdatedAt uint   `json:"updated_at"`
+	ID        uint   `json:"id" example:"1"`
+	Title     string `json:"title" example:"My First Note"`
+	Content   string `json:"content" example:"This is the content of my first note"`
+	CreatedAt uint   `json:"created_at" example:"1672531200"`
+	UpdatedAt uint   `json:"updated_at" example:"1672531200"`
 }
 
-// NotesListResponse represents the response for listing notes
 type NotesListResponse struct {
-	Notes []NoteResponse `json:"notes"`
-	Count int            `json:"count"`
+	Notes      []NoteResponse `json:"notes"`
+	Count      int            `json:"count" example:"5"`
+	Total      int64          `json:"total" example:"25"`
+	Page       int            `json:"page" example:"1"`
+	Limit      int            `json:"limit" example:"10"`
+	TotalPages int64          `json:"total_pages" example:"3"`
 }
 
 // CreateNote handles creating a new note
+// @Summary Create a new note
+// @Description Create a new note for the authenticated user
+// @Tags Notes
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body CreateNoteRequest true "Note creation data"
+// @Success 201 {object} NoteResponse "Note created successfully"
+// @Failure 400 {object} map[string]string "Invalid request data"
+// @Failure 401 {object} map[string]string "User not authenticated"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /notes [post]
 func (h *NotesHandler) CreateNote(c *fiber.Ctx) error {
 	var req CreateNoteRequest
 
-	// Parse request body
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
-
-	// Validate required fields
-	if req.Title == "" || req.Content == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Title and content are required",
-		})
-	}
-
-	// Validate title length
-	if len(req.Title) > 255 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Title cannot exceed 255 characters",
-		})
-	}
-
-	// Get user from JWT middleware
 	claims, ok := middleware.GetUserFromContext(c)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -78,7 +66,24 @@ func (h *NotesHandler) CreateNote(c *fiber.Ctx) error {
 		})
 	}
 
-	// Create new note
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	if req.Title == "" || req.Content == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Title and content are required",
+		})
+	}
+
+	if len(req.Title) > 255 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Title cannot exceed 255 characters",
+		})
+	}
+
 	note := models.Note{
 		UserID:  claims.UserID,
 		Title:   req.Title,
@@ -104,8 +109,20 @@ func (h *NotesHandler) CreateNote(c *fiber.Ctx) error {
 }
 
 // GetNotes handles getting all notes for the authenticated user
+// @Summary Get all notes
+// @Description Get all notes for the authenticated user with pagination and search
+// @Tags Notes
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Number of notes per page" default(10)
+// @Param search query string false "Search term for notes title or content"
+// @Success 200 {object} NotesListResponse "Notes retrieved successfully"
+// @Failure 401 {object} map[string]string "User not authenticated"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /notes [get]
 func (h *NotesHandler) GetNotes(c *fiber.Ctx) error {
-	// Get user from JWT middleware
 	claims, ok := middleware.GetUserFromContext(c)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -113,7 +130,6 @@ func (h *NotesHandler) GetNotes(c *fiber.Ctx) error {
 		})
 	}
 
-	// Parse query parameters for pagination
 	page := c.QueryInt("page", 1)
 	limit := c.QueryInt("limit", 10)
 	search := c.Query("search", "")
@@ -127,10 +143,8 @@ func (h *NotesHandler) GetNotes(c *fiber.Ctx) error {
 
 	offset := (page - 1) * limit
 
-	// Build query
 	query := db.DB.Where("user_id = ?", claims.UserID)
 
-	// Add search functionality
 	if search != "" {
 		query = query.Where("title LIKE ? OR content LIKE ?", "%"+search+"%", "%"+search+"%")
 	}
@@ -173,21 +187,33 @@ func (h *NotesHandler) GetNotes(c *fiber.Ctx) error {
 }
 
 // GetNote handles getting a specific note by ID (only for user's own notes)
+// @Summary Get a specific note
+// @Description Get a specific note by ID for the authenticated user
+// @Tags Notes
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Note ID"
+// @Success 200 {object} NoteResponse "Note retrieved successfully"
+// @Failure 400 {object} map[string]string "Invalid note ID"
+// @Failure 401 {object} map[string]string "User not authenticated"
+// @Failure 404 {object} map[string]string "Note not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /notes/{id} [get]
 func (h *NotesHandler) GetNote(c *fiber.Ctx) error {
-	// Get note ID from URL params
+
+	claims, ok := middleware.GetUserFromContext(c)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "User not authenticated",
+		})
+	}
+
 	noteIDStr := c.Params("id")
 	noteID, err := strconv.ParseUint(noteIDStr, 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid note ID",
-		})
-	}
-
-	// Get user from JWT middleware
-	claims, ok := middleware.GetUserFromContext(c)
-	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "User not authenticated",
 		})
 	}
 
@@ -216,8 +242,28 @@ func (h *NotesHandler) GetNote(c *fiber.Ctx) error {
 }
 
 // UpdateNote handles updating a specific note (only for user's own notes)
+// @Summary Update a specific note
+// @Description Update a specific note by ID for the authenticated user
+// @Tags Notes
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Note ID"
+// @Param request body UpdateNoteRequest true "Note update data"
+// @Success 200 {object} NoteResponse "Note updated successfully"
+// @Failure 400 {object} map[string]string "Invalid request data or note ID"
+// @Failure 401 {object} map[string]string "User not authenticated"
+// @Failure 404 {object} map[string]string "Note not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /notes/{id} [put]
 func (h *NotesHandler) UpdateNote(c *fiber.Ctx) error {
-	// Get note ID from URL params
+	claims, ok := middleware.GetUserFromContext(c)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "User not authenticated",
+		})
+	}
+
 	noteIDStr := c.Params("id")
 	noteID, err := strconv.ParseUint(noteIDStr, 10, 32)
 	if err != nil {
@@ -228,32 +274,21 @@ func (h *NotesHandler) UpdateNote(c *fiber.Ctx) error {
 
 	var req UpdateNoteRequest
 
-	// Parse request body
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
 	}
 
-	// Validate required fields
 	if req.Title == "" || req.Content == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Title and content are required",
 		})
 	}
 
-	// Validate title length
 	if len(req.Title) > 255 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Title cannot exceed 255 characters",
-		})
-	}
-
-	// Get user from JWT middleware
-	claims, ok := middleware.GetUserFromContext(c)
-	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "User not authenticated",
 		})
 	}
 
@@ -270,7 +305,6 @@ func (h *NotesHandler) UpdateNote(c *fiber.Ctx) error {
 		})
 	}
 
-	// Update note
 	note.Title = req.Title
 	note.Content = req.Content
 
@@ -293,21 +327,32 @@ func (h *NotesHandler) UpdateNote(c *fiber.Ctx) error {
 }
 
 // DeleteNote handles deleting a specific note (only for user's own notes)
+// @Summary Delete a specific note
+// @Description Delete a specific note by ID for the authenticated user
+// @Tags Notes
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Note ID"
+// @Success 200 {object} map[string]string "Note deleted successfully"
+// @Failure 400 {object} map[string]string "Invalid note ID"
+// @Failure 401 {object} map[string]string "User not authenticated"
+// @Failure 404 {object} map[string]string "Note not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /notes/{id} [delete]
 func (h *NotesHandler) DeleteNote(c *fiber.Ctx) error {
-	// Get note ID from URL params
+	claims, ok := middleware.GetUserFromContext(c)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "User not authenticated",
+		})
+	}
+
 	noteIDStr := c.Params("id")
 	noteID, err := strconv.ParseUint(noteIDStr, 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid note ID",
-		})
-	}
-
-	// Get user from JWT middleware
-	claims, ok := middleware.GetUserFromContext(c)
-	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "User not authenticated",
 		})
 	}
 
