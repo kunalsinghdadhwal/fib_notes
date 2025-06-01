@@ -1,12 +1,12 @@
-# FibNotes API
-
-A production-ready REST API for notes management built with Go, Fiber web framework, and MySQL. The application provides secure user authentication, CRUD operations for notes, and comprehensive API documentation.
-
 > [!IMPORTANT] 
 >
 > This Project also has postman collections as well as swagger docs powered by scalar
 >
+>  [Live Deployed Link](https://fibin-notes.onrender.com)
 
+# FibNotes API
+
+A production-ready REST API for notes management built with Go, Fiber web framework, and MySQL. The application provides secure user authentication, CRUD operations for notes, and comprehensive API documentation.
 
 ## Architecture Overview
 
