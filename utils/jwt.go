@@ -14,6 +14,7 @@ type JWTClaims struct {
 	UserID uuid.UUID `json:"user_id"`
 	Name   string    `json:"name"`
 	Email  string    `json:"email"`
+	Role   string    `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -27,7 +28,7 @@ type TokenPair struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func GenerateTokenPair(userID uuid.UUID, name, email string) (*TokenPair, error) {
+func GenerateTokenPair(userID uuid.UUID, name, email string, role string) (*TokenPair, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		log.Fatalf("JWT_SECRET environment variable is not set")
@@ -38,6 +39,7 @@ func GenerateTokenPair(userID uuid.UUID, name, email string) (*TokenPair, error)
 		UserID: userID,
 		Name:   name,
 		Email:  email,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
@@ -70,8 +72,8 @@ func GenerateTokenPair(userID uuid.UUID, name, email string) (*TokenPair, error)
 	}, nil
 }
 
-func GenerateJWT(userID uuid.UUID, name, email string) (string, error) {
-	tokenPair, err := GenerateTokenPair(userID, name, email)
+func GenerateJWT(userID uuid.UUID, name, email, role string) (string, error) {
+	tokenPair, err := GenerateTokenPair(userID, name, email, role)
 	if err != nil {
 		return "", err
 	}

@@ -12,6 +12,7 @@ type UserInfo struct {
 	ID    uuid.UUID `json:"id"`
 	Name  string    `json:"name"`
 	Email string    `json:"email"`
+	Role  string    `json:"role"`
 }
 
 func JWTMiddleware() fiber.Handler {
@@ -53,7 +54,28 @@ func GetUserInfoFromContext(c *fiber.Ctx) (*UserInfo, bool) {
 		ID:    claims.UserID,
 		Name:  claims.Name,
 		Email: claims.Email,
+		Role:  claims.Role,
 	}
 
 	return userInfo, true
+}
+
+// AdminMiddleware restricts access to admin users only
+func AdminMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		claims, ok := GetUserFromContext(c)
+		if !ok {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "User not authenticated",
+			})
+		}
+
+		if claims.Role != "ADMIN" {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Access denied. Admin privileges required",
+			})
+		}
+
+		return c.Next()
+	}
 }

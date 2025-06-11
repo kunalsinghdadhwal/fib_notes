@@ -1,12 +1,12 @@
+# FibNotes API
+
+A production-ready REST API for notes management built with Go, Fiber web framework, and MySQL. The application provides secure user authentication, CRUD operations for notes, and comprehensive API documentation.
+
 > [!IMPORTANT] 
 >
 > This Project also has postman collections as well as swagger docs powered by scalar
 >
->  [Live Deployed Link](https://fibin-notes.onrender.com)
 
-# FibNotes API
-
-A production-ready REST API for notes management built with Go, Fiber web framework, and MySQL. The application provides secure user authentication, CRUD operations for notes, and comprehensive API documentation.
 
 ## Architecture Overview
 
@@ -29,6 +29,34 @@ This application follows a clean architecture pattern with clear separation of c
 - **Documentation**: Swagger/OpenAPI with Scalar
 - **Containerization**: Docker & Docker Compose
 - **Environment**: dotenv for configuration
+
+## API Endpoints
+
+### Authentication
+```
+POST   /auth/register        - User registration
+POST   /auth/login           - User login
+POST   /auth/refresh         - Refresh access token
+POST   /auth/logout          - User logout (protected)
+GET    /auth/me              - Get current user info (protected)
+PUT    /auth/change-password - Change user password (protected)
+```
+
+### Notes
+```
+POST   /notes                - Create a new note (protected)
+GET    /notes                - List user notes with pagination (protected)
+GET    /notes/:id            - Get specific note (protected)
+PUT    /notes/:id            - Update note (protected)
+DELETE /notes/:id            - Delete note (protected)
+```
+
+### System
+```
+GET    /                     - Redirect to API documentation
+GET    /api/reference        - Interactive API documentation
+GET    /health               - Health check endpoint
+```
 
 ## Quick Start
 
@@ -101,35 +129,11 @@ docker exec -it notes_app ./seed help
 docker exec -it notes_app ./seed -n 20
 ```
 
-
-
-## API Endpoints
-
-### Authentication
-```
-POST   /auth/register        - User registration
-POST   /auth/login           - User login
-POST   /auth/refresh         - Refresh access token
-POST   /auth/logout          - User logout (protected)
-GET    /auth/me              - Get current user info (protected)
-PUT    /auth/change-password - Change user password (protected)
-```
-
-### Notes
-```
-POST   /notes                - Create a new note (protected)
-GET    /notes                - List user notes with pagination (protected)
-GET    /notes/:id            - Get specific note (protected)
-PUT    /notes/:id            - Update note (protected)
-DELETE /notes/:id            - Delete note (protected)
-```
-
-### System
-```
-GET    /                     - Redirect to API documentation
-GET    /api/reference        - Interactive API documentation
-GET    /health               - Health check endpoint
-```
+The seeder creates:
+- User names and email addresses
+- Professional note content (meeting notes, project plans, etc.)
+- Randomized note distribution (5-10 notes per user)
+- Hashed passwords (default: "password123")
 
 ## Configuration
 

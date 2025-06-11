@@ -693,6 +693,191 @@
                     }
                 }
             }
+        },
+        "/seeder/clear": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Removes all users and notes from the database (for development/testing only). Requires ADMIN role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "seeder"
+                ],
+                "summary": "Clear all data from the database (Admin only)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ClearResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Admin privileges required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/seeder/seed": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates test users and notes in the database for development/testing purposes. Requires ADMIN role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "seeder"
+                ],
+                "summary": "Seed the database with test data (Admin only)",
+                "parameters": [
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Number of users to create (default: 10, max: 100)",
+                        "name": "count",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SeederResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Admin privileges required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/seeder/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the current count of users and notes in the database. Requires ADMIN role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "seeder"
+                ],
+                "summary": "Get database statistics (Admin only)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Admin privileges required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -723,6 +908,19 @@
                     "type": "string",
                     "minLength": 6,
                     "example": "newpassword123"
+                }
+            }
+        },
+        "handlers.ClearResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Database cleared successfully"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -856,6 +1054,23 @@
                 }
             }
         },
+        "handlers.SeederResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Database seeded successfully"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "user_count": {
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
         "handlers.UpdateNoteRequest": {
             "type": "object",
             "required": [
@@ -916,6 +1131,9 @@
                     "items": {
                         "$ref": "#/definitions/models.Note"
                     }
+                },
+                "role": {
+                    "type": "string"
                 },
                 "updated_at": {
                     "type": "integer"

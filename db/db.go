@@ -5,24 +5,20 @@ import (
 	"os"
 
 	"github.com/kunalsinghdadhwal/fib_notes/models"
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 func Connect() error {
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPass := os.Getenv("DB_PASS")
-	dbName := os.Getenv("DB_NAME")
-  dbHost := os.Getenv("DB_HOST")
-
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
-		dbUser, dbPass, dbHost, dbPort, dbName)
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		return fmt.Errorf("DATABASE_URL environment variable is required")
+	}
 
 	var err error
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}

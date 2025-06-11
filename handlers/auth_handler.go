@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kunalsinghdadhwal/fib_notes/db"
 	"github.com/kunalsinghdadhwal/fib_notes/middleware"
 	"github.com/kunalsinghdadhwal/fib_notes/models"
+	"github.com/kunalsinghdadhwal/fib_notes/seeder"
 	"github.com/kunalsinghdadhwal/fib_notes/utils"
 	"gorm.io/gorm"
 )
@@ -44,6 +46,19 @@ type AuthResponse struct {
 type ChangePasswordRequest struct {
 	CurrentPassword string `json:"current_password" validate:"required" example:"oldpassword123"`
 	NewPassword     string `json:"new_password" validate:"required,min=6" example:"newpassword123"`
+}
+
+// SeederResponse represents the response for database seeding
+type SeederResponse struct {
+	Message   string `json:"message" example:"Database seeded successfully"`
+	UserCount int    `json:"user_count,omitempty" example:"10"`
+	Success   bool   `json:"success" example:"true"`
+}
+
+// ClearResponse represents the response for clearing the database
+type ClearResponse struct {
+	Message string `json:"message" example:"Database cleared successfully"`
+	Success bool   `json:"success" example:"true"`
 }
 
 // Register handles user registration
@@ -155,7 +170,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	}
 
 	// Generate token pair
-	tokenPair, err := utils.GenerateTokenPair(user.ID, user.Name, user.Email)
+	tokenPair, err := utils.GenerateTokenPair(user.ID, user.Name, user.Email, user.Role)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to generate tokens",
@@ -377,7 +392,7 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	tokenPair, tokenErr := utils.GenerateTokenPair(user.ID, user.Name, user.Email)
+	tokenPair, tokenErr := utils.GenerateTokenPair(user.ID, user.Name, user.Email, user.Role)
 	if tokenErr != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to generate new tokens",
@@ -405,5 +420,97 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "Token refreshed successfully",
+	})
+}
+
+// SeedDatabase godoc
+// @Summary      Seed the database with test data (Admin only)
+// @Description  Creates test users and notes in the database for development/testing purposes. Requires ADMIN role.
+// @Tags         seeder
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        count    query     int  false  "Number of users to create (default: 10, max: 100)"  minimum(1)  maximum(100)
+// @Success      200      {object}  SeederResponse
+// @Failure      400      {object}  map[string]string
+// @Failure      401      {object}  map[string]string "User not authenticated"
+// @Failure      403      {object}  map[string]string "Admin privileges required"
+// @Failure      500      {object}  map[string]string
+// @Router       /seeder/seed [post]
+func (h *AuthHandler) SeedDatabase(c *fiber.Ctx) error {
+	// Get user count from query parameter
+	countStr := c.Query("count", "10")
+	count, err := strconv.Atoi(countStr)
+	if err != nil || count < 1 || count > 100 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Count must be a number between 1 and 100",
+		})
+	}
+
+	// Execute seeding
+	if err := seeder.SeedDatabase(count); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to seed database: %v", err),
+		})
+	}
+
+	return c.JSON(SeederResponse{
+		Message:   fmt.Sprintf("Database seeded successfully with %d users", count),
+		UserCount: count,
+		Success:   true,
+	})
+}
+
+// ClearDatabase godoc
+// @Summary      Clear all data from the database (Admin only)
+// @Description  Removes all users and notes from the database (for development/testing only). Requires ADMIN role.
+// @Tags         seeder
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  ClearResponse
+// @Failure      401  {object}  map[string]string "User not authenticated"
+// @Failure      403  {object}  map[string]string "Admin privileges required"
+// @Failure      500  {object}  map[string]string
+// @Router       /seeder/clear [post]
+func (h *AuthHandler) ClearDatabase(c *fiber.Ctx) error {
+	// Execute clearing
+	if err := seeder.ClearDatabase(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to clear database: %v", err),
+		})
+	}
+
+	return c.JSON(ClearResponse{
+		Message: "Database cleared successfully",
+		Success: true,
+	})
+}
+
+// GetSeederStats godoc
+// @Summary      Get database statistics (Admin only)
+// @Description  Returns the current count of users and notes in the database. Requires ADMIN role.
+// @Tags         seeder
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}
+// @Failure      401  {object}  map[string]string "User not authenticated"
+// @Failure      403  {object}  map[string]string "Admin privileges required"
+// @Failure      500  {object}  map[string]string
+// @Router       /seeder/stats [get]
+func (h *AuthHandler) GetSeederStats(c *fiber.Ctx) error {
+	userCount, noteCount, err := seeder.GetStats()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to retrieve database stats: %v", err),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"success":    true,
+		"message":    "Database statistics retrieved successfully",
+		"user_count": userCount,
+		"note_count": noteCount,
 	})
 }

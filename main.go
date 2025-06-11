@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-   _ "github.com/joho/godotenv"
+	"github.com/joho/godotenv"
 	"github.com/kunalsinghdadhwal/fib_notes/db"
 	"github.com/kunalsinghdadhwal/fib_notes/routes"
 	"github.com/watchakorn-18k/scalar-go"
@@ -15,10 +15,10 @@ import (
 
 func main() {
 
-//	err := godotenv.Load()
-//	if err != nil {
-//		log.Fatal("Error loading .env file")
-//	}
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -45,6 +45,7 @@ func main() {
 
 	routes.SetupAuthRoutes(app)
 	routes.SetupNotesRoutes(app)
+	routes.SetupSeederRoutes(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Redirect("/api/reference", fiber.StatusMovedPermanently)

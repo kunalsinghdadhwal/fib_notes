@@ -20,6 +20,15 @@ definitions:
     - current_password
     - new_password
     type: object
+  handlers.ClearResponse:
+    properties:
+      message:
+        example: Database cleared successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
   handlers.CreateNoteRequest:
     properties:
       content:
@@ -114,6 +123,18 @@ definitions:
       user:
         $ref: '#/definitions/models.User'
     type: object
+  handlers.SeederResponse:
+    properties:
+      message:
+        example: Database seeded successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+      user_count:
+        example: 10
+        type: integer
+    type: object
   handlers.UpdateNoteRequest:
     properties:
       content:
@@ -156,39 +177,43 @@ definitions:
         items:
           $ref: '#/definitions/models.Note'
         type: array
+      role:
+        type: string
       updated_at:
         type: integer
     type: object
 info:
   contact: {}
 paths:
-  /auth/register:
-    post:
+  /auth/change-password:
+    put:
       consumes:
       - application/json
-      description: Create a new user account with name, email, and password
+      description: Change the password of the currently authenticated user
       parameters:
-      - description: User registration data
+      - description: Password change data
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.RegisterRequest'
+          $ref: '#/definitions/handlers.ChangePasswordRequest'
       produces:
       - application/json
       responses:
-        "201":
-          description: User registered successfully
+        "200":
+          description: Password changed successfully
           schema:
-            $ref: '#/definitions/handlers.RegisterResponse'
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: Invalid request data
           schema:
             additionalProperties:
               type: string
             type: object
-        "409":
-          description: User already exists
+        "401":
+          description: User not authenticated or current password incorrect
           schema:
             additionalProperties:
               type: string
@@ -199,7 +224,9 @@ paths:
             additionalProperties:
               type: string
             type: object
-      summary: Register a new user
+      security:
+      - BearerAuth: []
+      summary: Change user password
       tags:
       - Authentication
   /auth/login:
@@ -297,50 +324,6 @@ paths:
       summary: Get current user profile
       tags:
       - Authentication
-  /auth/change-password:
-    put:
-      consumes:
-      - application/json
-      description: Change the password of the currently authenticated user
-      parameters:
-      - description: Password change data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.ChangePasswordRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Password changed successfully
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Invalid request data
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: User not authenticated or current password incorrect
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Change user password
-      tags:
-      - Authentication
   /auth/refresh:
     post:
       consumes:
@@ -374,6 +357,46 @@ paths:
               type: string
             type: object
       summary: Refresh access token
+      tags:
+      - Authentication
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with name, email, and password
+      parameters:
+      - description: User registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered successfully
+          schema:
+            $ref: '#/definitions/handlers.RegisterResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: User already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
       tags:
       - Authentication
   /notes:
@@ -608,4 +631,126 @@ paths:
       summary: Update a specific note
       tags:
       - Notes
+  /seeder/clear:
+    post:
+      consumes:
+      - application/json
+      description: Removes all users and notes from the database (for development/testing
+        only). Requires ADMIN role.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ClearResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Admin privileges required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Clear all data from the database (Admin only)
+      tags:
+      - seeder
+  /seeder/seed:
+    post:
+      consumes:
+      - application/json
+      description: Creates test users and notes in the database for development/testing
+        purposes. Requires ADMIN role.
+      parameters:
+      - description: 'Number of users to create (default: 10, max: 100)'
+        in: query
+        maximum: 100
+        minimum: 1
+        name: count
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SeederResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authenticated
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Admin privileges required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Seed the database with test data (Admin only)
+      tags:
+      - seeder
+  /seeder/stats:
+    get:
+      consumes:
+      - application/json
+      description: Returns the current count of users and notes in the database. Requires
+        ADMIN role.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: User not authenticated
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Admin privileges required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get database statistics (Admin only)
+      tags:
+      - seeder
 swagger: "2.0"

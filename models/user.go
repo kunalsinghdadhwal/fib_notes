@@ -7,11 +7,12 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID `gorm:"type:char(36);primaryKey" json:"id"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	Name      string    `gorm:"type:varchar(255);not null" json:"name"`
 	Email     string    `gorm:"type:varchar(255);not null;uniqueIndex" json:"email"`
 	Password  string    `gorm:"type:varchar(255);not null" json:"-"`
 	Notes     []Note    `gorm:"foreignKey:UserID" json:"notes,omitempty"`
+	Role      string    `gorm:"type:varchar(50);default:'USER'" json:"role"`
 	CreatedAt uint      `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt uint      `gorm:"autoUpdateTime" json:"updated_at"`
 }
