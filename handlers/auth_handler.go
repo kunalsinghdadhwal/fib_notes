@@ -425,7 +425,7 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 
 // SeedDatabase godoc
 // @Summary      Seed the database with test data (Admin only)
-// @Description  Creates test users and notes in the database for development/testing purposes. Requires ADMIN role.
+// @Description  Creates test users and notes in the database for development/testing purposes. Requires ADMIN role.Login with admin, admin credentials to access this endpoint.
 // @Tags         seeder
 // @Accept       json
 // @Produce      json
@@ -463,7 +463,7 @@ func (h *AuthHandler) SeedDatabase(c *fiber.Ctx) error {
 
 // ClearDatabase godoc
 // @Summary      Clear all data from the database (Admin only)
-// @Description  Removes all users and notes from the database (for development/testing only). Requires ADMIN role.
+// @Description  Removes all users and notes from the database (for development/testing only). Requires ADMIN role.Login with admin, admin credentials to access this endpoint.
 // @Tags         seeder
 // @Accept       json
 // @Produce      json
@@ -489,7 +489,7 @@ func (h *AuthHandler) ClearDatabase(c *fiber.Ctx) error {
 
 // GetSeederStats godoc
 // @Summary      Get database statistics (Admin only)
-// @Description  Returns the current count of users and notes in the database. Requires ADMIN role.
+// @Description  Returns the current count of users and notes in the database. Requires ADMIN role.Login with admin, admin credentials to access this endpoint.
 // @Tags         seeder
 // @Accept       json
 // @Produce      json

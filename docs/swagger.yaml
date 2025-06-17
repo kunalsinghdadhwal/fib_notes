@@ -636,7 +636,8 @@ paths:
       consumes:
       - application/json
       description: Removes all users and notes from the database (for development/testing
-        only). Requires ADMIN role.
+        only). Requires ADMIN role.Login with admin, admin credentials to access this
+        endpoint.
       produces:
       - application/json
       responses:
@@ -672,7 +673,8 @@ paths:
       consumes:
       - application/json
       description: Creates test users and notes in the database for development/testing
-        purposes. Requires ADMIN role.
+        purposes. Requires ADMIN role.Login with admin, admin credentials to access
+        this endpoint.
       parameters:
       - description: 'Number of users to create (default: 10, max: 100)'
         in: query
@@ -721,7 +723,7 @@ paths:
       consumes:
       - application/json
       description: Returns the current count of users and notes in the database. Requires
-        ADMIN role.
+        ADMIN role.Login with admin, admin credentials to access this endpoint.
       produces:
       - application/json
       responses:

@@ -712,7 +712,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Removes all users and notes from the database (for development/testing only). Requires ADMIN role.",
+                "description": "Removes all users and notes from the database (for development/testing only). Requires ADMIN role.Login with admin, admin credentials to access this endpoint.",
                 "consumes": [
                     "application/json"
                 ],
@@ -767,7 +767,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates test users and notes in the database for development/testing purposes. Requires ADMIN role.",
+                "description": "Creates test users and notes in the database for development/testing purposes. Requires ADMIN role.Login with admin, admin credentials to access this endpoint.",
                 "consumes": [
                     "application/json"
                 ],
@@ -841,7 +841,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns the current count of users and notes in the database. Requires ADMIN role.",
+                "description": "Returns the current count of users and notes in the database. Requires ADMIN role.Login with admin, admin credentials to access this endpoint.",
                 "consumes": [
                     "application/json"
                 ],
