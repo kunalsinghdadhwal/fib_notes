@@ -31,7 +31,7 @@ jobs:
 
       - name: Build Docker images using docker-compose
         run: |
-          docker-compose -f docker-compose.yml build
+          docker compose -f docker-compose.yml build
 
       - name: Tag and push app image to Docker Hub
         run: |
