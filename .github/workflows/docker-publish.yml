@@ -42,5 +42,3 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/fib_notes:latest
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/fib_notes:${GITHUB_REF_NAME}
 
-      - name: Optional: Output built images
-        run: docker images
