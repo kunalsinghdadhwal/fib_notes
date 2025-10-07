@@ -1,14 +1,31 @@
+version: "3.9"
+
 services:
   app:
     build:
       context: .
       dockerfile: app.Dockerfile
-    container_name: notes_app
+    container_name: fib_notes_app
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      PORT: ${PORT}
-      JWT_SECRET: ${JWT_SECRET}
+      PORT: ${PORT:-3000}
+      JWT_SECRET: ${JWT_SECRET:-default_secret_key}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres-db:5432/fibnotes?sslmode=disable}
+    depends_on:
+      - postgres-db
     restart: unless-stopped
 
+  postgres-db:
+    image: postgres:16-alpine
+    restart: always
+    container_name: fib_notes_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-fibnotes}
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
