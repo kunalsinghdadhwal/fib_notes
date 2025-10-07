@@ -51,6 +51,3 @@ jobs:
           labels: |
             org.opencontainers.image.source="https://github.com/${{ github.repository }}"
             org.opencontainers.image.revision="${{ github.sha }}"
-
-      - name: Output image digest
-        run: echo "Image Digest: ${{ steps.build-and-push.outputs.digest }}"
